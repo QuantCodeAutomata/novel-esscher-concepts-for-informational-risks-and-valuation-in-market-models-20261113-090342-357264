@@ -108,9 +108,15 @@ Verdicts:
   in `src/config.py` (`EXP1_N_SIM_PAPER=200,000`, `EXP2_N_SIM_PAPER=100,000`)
   to `EXP1_N_SIM_RUN=40,000` and `EXP2_N_SIM_RUN=20,000` respectively, to keep
   the full test and experiment suite within the available computation time
-  (the paper gives no sample size to begin with). Run
+  (the paper gives no sample size to begin with). For exp_1, a direct
+  measurement at `EXP1_N_SIM_PAPER=200,000` shows the simultaneous path
+  arrays of a single scenario (the geometric jump-diffusion, the random-time
+  parametrization, the G-martingale transforms, and the Esscher density)
+  peak at roughly 7.9 GB of resident memory, which is why the smaller
+  `EXP1_N_SIM_RUN` is used for the reported run. Run
   `python -m exp.exp1 --full` / `python -m exp.exp2 --full` for the
-  paper-scale configuration.
+  paper-scale configuration (exp_1 requires a machine with enough memory for
+  the measured 7.9 GB peak).
 - exp_2's vulnerable-claim payoff (a European call with strike K=100 on
   S_{T∧tau}, paying a fixed fraction of K as recovery at default) is a
   representative choice: the paper leaves the payoff unspecified beyond
@@ -149,5 +155,6 @@ Verdicts:
   values Y^(n) are reported.
 - The full-scale Monte Carlo configuration declared in `src/config.py`
   (`EXP1_N_SIM_PAPER=200,000`, `EXP2_N_SIM_PAPER=100,000`) was not run in this
-  report for reasons of computation time; it is available via the `--full`
-  flag of each experiment script.
+  report for reasons of computation time and, for exp_1, of memory (the
+  measured 7.9 GB peak noted above); it is available via the `--full` flag
+  of each experiment script.

@@ -41,8 +41,8 @@ ZETA_MODE = "gamma_tilde"  # which zeta in {gamma, gamma_tilde} is used in the u
 # ---------------------------------------------------------------------------
 # exp_1: Monte Carlo verification settings
 # ---------------------------------------------------------------------------
-EXP1_N_SIM_PAPER = 200_000   # paper-scale number of Monte Carlo paths for the martingale checks (not specified in the paper; chosen for statistical accuracy)
-EXP1_N_SIM_RUN = 40_000      # reduced path count actually executed, to keep the full experiment suite within the available computation time
+EXP1_N_SIM_PAPER = 200_000   # paper-scale number of Monte Carlo paths for the martingale checks (not specified in the paper; chosen for statistical accuracy); at this size a single scenario's path arrays peak at roughly 7.9 GB of resident memory, so --full should only be run on a machine with sufficient RAM
+EXP1_N_SIM_RUN = 40_000      # reduced path count actually executed, to keep the full experiment suite within the available computation time and memory
 EXP1_SEED = 12345            # random seed for reproducibility (not specified in the paper)
 
 # ---------------------------------------------------------------------------

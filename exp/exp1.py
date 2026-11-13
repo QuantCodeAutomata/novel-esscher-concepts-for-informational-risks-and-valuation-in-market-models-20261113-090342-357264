@@ -170,11 +170,9 @@ def main(full: bool = False) -> dict:
                       lam=config.LAMBDA_POIS, r=config.R_RATE)
 
     rows = []
-    densities = {}
     for i, (name, rt_params) in enumerate(_scenarios().items()):
-        out, density, _ = run_scenario(name, rt_params, mp, n_sim, n_steps, seed + 10 * i)
+        out, _, _ = run_scenario(name, rt_params, mp, n_sim, n_steps, seed + 10 * i)
         rows.append(out)
-        densities[name] = density.Z_G[:, -1]
 
     rows.append(run_corollary_3_5d(mp, n_sim, n_steps, seed + 100))
 
