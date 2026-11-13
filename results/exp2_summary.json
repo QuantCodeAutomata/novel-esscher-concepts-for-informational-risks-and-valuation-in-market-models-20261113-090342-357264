@@ -1,0 +1,24 @@
+{
+  "n_sim": 20000,
+  "n_steps": 60,
+  "clip_fraction": 0.011844166666666666,
+  "final_interval": [
+    0.8268241931423443,
+    223.28904088995336
+  ],
+  "upper_monotone": true,
+  "lower_monotone": true,
+  "constraint_diagnostics_upper": {
+    "frac_w_ok": 0.7833333333333333,
+    "frac_v_ok": 0.9833333333333333,
+    "mean_w": 12.65061275332363,
+    "mean_v": -203.46893929903558
+  },
+  "constraint_diagnostics_lower": {
+    "frac_w_ok": 1.0,
+    "frac_v_ok": 1.0,
+    "mean_w": -21.382830458894436,
+    "mean_v": 38.26975797989055
+  },
+  "elapsed_seconds": 4.62836766242981
+}
