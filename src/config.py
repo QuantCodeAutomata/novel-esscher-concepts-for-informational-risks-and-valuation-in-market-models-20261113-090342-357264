@@ -55,5 +55,5 @@ EXP2_SEED = 2718
 
 EXP2_STRIKE = 100.0          # strike K of the vulnerable European call payoff (not specified in the paper: "specific payoff structures are referenced but not detailed")
 EXP2_RECOVERY_FRACTION = 0.40  # recovery rate paid at default, fraction of K (not specified in the paper)
-EXP2_TRUNCATION_LEVELS = (1, 2, 4, 8)  # truncation levels n used in Theorem 4.9/4.10 to build Psi_n, Phi_n and verify Y^{(n)} monotone convergence
+EXP2_TRUNCATION_LEVELS = (1, 2, 4, 8, 16, 32, 64)  # truncation levels n used in Theorem 4.9/4.10 to build Psi_n, Phi_n and verify Y^{(n)} monotone convergence
 EXP2_REGRESSION_DEGREE = 2    # polynomial regression degree used in the least-squares Monte Carlo BSDE backward induction (not specified in the paper)

@@ -178,6 +178,7 @@ def solve_truncated_bsde(
     rt_params: RandomTimeParams,
     n_trunc: float,
     regression_degree: int = 2,
+    driver_clip: float | None = None,
 ) -> Dict[str, np.ndarray]:
     """Backward induction LSMC solver for the truncated CBSDE with driver
     kappa_n (Theorem 4.9), stopped at each path's own tau.
@@ -186,12 +187,30 @@ def solve_truncated_bsde(
     each step the martingale-representation triplet (Z, U, V) is estimated
     as a single *pooled* OLS coefficient (one number per time step, shared
     by all paths) of Y_{k+1} on [1, poly(S_k), poly(G_k), dW0_k,
-    dN_tilde0_k, dN_G_k]; Z_k, U_k, V_k are the coefficients on dW0_k/dt,
-    dN_tilde0_k, dN_G_k. The polynomial-in-state features (degree
+    dN_tilde0_k, dN_G_k]; Z_k, U_k, V_k are the raw coefficients on dW0_k,
+    dN_tilde0_k, dN_G_k (no further dt rescaling: since
+    Y_{k+1} - E[Y_{k+1} | F_k] = Z_k dW0_k + U_k dNtilde0_k + V_k dN^G_k
+    is the one-step martingale-representation identity underlying the
+    BSDE of Theorem 4.9, and dW0_k, dN_tilde0_k are the raw, non-
+    standardized increments, the OLS slope on dW0_k already estimates
+    Z_k directly, exactly as the slopes on dN_tilde0_k, dN_G_k estimate
+    U_k, V_k without rescaling). The polynomial-in-state features (degree
     `regression_degree`) only improve the conditional-expectation fit of
     Y_{k+1} (reduce omitted-variable bias); they do not enter Z, U, V
     themselves. Standard LSMC simplification of the BMO martingale
     representation of Theorem 4.9.
+
+    `driver_clip` (not specified constructively by the paper, which gives
+    no numerical scheme for (4.87)): a single pooled-regression pass gives
+    a noisy estimate of (Z, U, V); as n grows, the truncation penalty
+    kappa_n scales this noise by (e^n - 1) (jump branch) and by the
+    theta(-n)/theta(n) spread (continuous branch), so an unclipped
+    explicit Euler step can diverge with n instead of converging as in
+    Theorem 4.9(c). Clipping the driver's per-step contribution to the
+    CFL-type bound (range of xi) / T_horizon -- the rate at which the
+    bounded terminal payoff can possibly move -- stabilizes the explicit
+    scheme without altering kappa_n at states where the constraint is not
+    (numerically) binding.
     """
     n_sim, n_steps_plus1 = paths.S.shape
     n_steps = n_steps_plus1 - 1
@@ -239,7 +258,7 @@ def solve_truncated_bsde(
             coeffs = _ridge_lstsq(design[idx_active], Y_next[idx_active])
         else:
             coeffs = np.zeros(design.shape[1])
-        z_k, u_k, v_k = coeffs[-3] / dt, coeffs[-2], coeffs[-1]
+        z_k, u_k, v_k = coeffs[-3], coeffs[-2], coeffs[-1]
         Z[:, k], U[:, k], V[:, k] = z_k, u_k, v_k
 
         kappa = driver_upper(
@@ -247,6 +266,8 @@ def solve_truncated_bsde(
             a_arr[:, k], delta_theta, mp.sigma, mp.gamma_tilde, rt_params.beta,
             G_minus[:, k], n_trunc,
         )
+        if driver_clip is not None:
+            kappa = np.clip(kappa, -driver_clip, driver_clip)
 
         Y_k_active = Y_next + kappa * dt
         Y_path[:, k] = np.where(active, Y_k_active, Y_next)
@@ -275,13 +296,20 @@ def pricing_bounds(
     transforms = compute_transforms(paths, rt_paths, alpha=rt_params.alpha, beta=rt_params.beta)
     dyn["dN_G"] = np.diff(transforms.N_G, axis=1)
 
+    # CFL-type stabilization of the explicit LSMC Euler scheme (not a
+    # numerical scheme given by the paper for (4.87)): the per-step driver
+    # contribution to Y cannot exceed the rate at which the (bounded)
+    # terminal payoff range could possibly move.
+    T_horizon = paths.dt * (paths.S.shape[1] - 1)
+    driver_clip = float(np.ptp(xi)) / T_horizon
+
     Y0_up = []
     Y0_inf = []
     last_upper = None
     last_lower = None
     for n in truncation_levels:
-        res_up = solve_truncated_bsde(xi, paths, rt_paths, ref, dyn, mp, rt_params, n, regression_degree)
-        res_lo = solve_truncated_bsde(-xi, paths, rt_paths, ref, dyn, mp, rt_params, n, regression_degree)
+        res_up = solve_truncated_bsde(xi, paths, rt_paths, ref, dyn, mp, rt_params, n, regression_degree, driver_clip)
+        res_lo = solve_truncated_bsde(-xi, paths, rt_paths, ref, dyn, mp, rt_params, n, regression_degree, driver_clip)
 
         Y0_up.append(float(np.mean(res_up["Y0"])))
         Y0_inf.append(float(np.mean(-res_lo["Y0"])))

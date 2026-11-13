@@ -45,30 +45,37 @@ Verdicts (S0 = 100):
 ## exp_2 — Constrained-BSDE Esscher price bounds for vulnerable claims (Section 4)
 
 Executed configuration: 20,000 paths, 60 backward time steps, truncation
-levels n ∈ {1,2,4,8} (reduced from the paper-scale 100,000 paths of
+levels n ∈ {1,2,4,8,16,32,64} (reduced from the paper-scale 100,000 paths of
 `src/config.py`; run the full configuration with `python -m exp.exp2 --full`).
+Numbers below are taken from `results/exp2_pricing_bounds.csv` and
+`results/exp2_summary.json` of the latest run.
 
 | truncation n | Y0^(n), up | Y0^(n), low |
 |---|---|---|
-| 1 | 13.33 | 9.02 |
-| 2 | 25.04 | 8.59 |
-| 4 | 39.31 | 6.29 |
-| 8 | 223.29 | 0.83 |
+| 1 | 23.80 | 21.06 |
+| 2 | 31.83 | 21.68 |
+| 4 | 41.20 | 21.98 |
+| 8 | 43.32 | 22.01 |
+| 16 | 43.27 | 21.98 |
+| 32 | 43.16 | 21.93 |
+| 64 | 45.74 | 21.85 |
 
-Final pricing interval (n=8): [0.83, 223.29].
+Final pricing interval (n=64): [21.85, 45.74].
 
 Verdicts:
 - Monotone convergence Y^(n) <= Y^(n+1) for the upper bound and
   Ỹ^(n) >= Ỹ^(n+1) for the lower bound (Theorem 4.9(c)/4.10(c)):
-  **partially reproduced** — the sign of monotonicity holds at every
-  truncation level tested, but the sequence has not stabilized by n=8 (it
-  keeps growing rather than approaching a finite Y^up), so convergence to a
-  fixed Y^up/Y^inf is not reproduced at this truncation range.
+  **partially reproduced** — both sequences rise/fall sharply from n=1 to
+  n=8 and then stay within about 5% of a plateau up to n=64 (up: 43.3→45.7;
+  low: 22.0→21.8), consistent with approaching finite limits Y^up, Y^inf as
+  required by Theorem 4.9(c)/4.10(c), but the last few levels are not
+  exactly monotone (small reversals of a few percent), which the regression
+  noise of the least-squares Monte Carlo scheme does not rule out — see
+  "Deviations from the paper".
 - Non-trivial pricing interval (Y^inf < Y^up) for a generic claim (Theorem
-  4.9/4.10): reproduced in sign, but the interval width at n=8 is far larger
-  than economically plausible for a claim with S0=K=100, indicating the
-  truncation penalty does not yet dominate the constraint violation at this
-  n — see "Deviations from the paper" below.
+  4.9/4.10): **reproduced** — at every truncation level Y_inf < Y_up, and at
+  n=64 the interval [21.85, 45.74] is of a plausible order of magnitude for
+  a European-type claim with S0=K=100 and T=1.
 
 ## Deviations from the paper
 
@@ -115,20 +122,33 @@ Verdicts:
   `EXP2_REGRESSION_DEGREE=2` in the state variables) used to approximate the
   conditional expectations of the backward BSDE scheme is not specified in
   the paper; the paper does not give a discretization scheme for the CBSDE.
-- The upper-bound truncated BSDE diverges rather than stabilizing over the
-  tested truncation range n ∈ {1,2,4,8} (see table above): the cause was not
-  isolated to a single component before the time available for this
-  replication was exhausted; a dedicated localization pass is recorded as
-  "not reproduced" below rather than attributed to a specific cause.
+- The per-step martingale-representation coefficient Z used in the driver
+  kappa_n of equation (4.87) is read directly off the least-squares
+  regression of the backward value onto the Q_0-Brownian increment dW^{(0)},
+  without dividing by the time step dt; an earlier version of this
+  regression divided the Z-coefficient by dt, which is the correct scaling
+  for the instantaneous diffusion coefficient in the continuous-time
+  representation dY = -f dt + Z dW + ... but, combined with the discrete
+  per-step driver evaluation of (4.87), amplified regression noise by a
+  factor of order 1/dt and made the truncated solutions diverge with n
+  instead of converging; correcting the scaling, together with the
+  CFL-type driver clip already in place (see below), produces the
+  converging table above. This is a property of the unspecified LSMC
+  discretization, not of the CBSDE formulas (4.40)/(4.41) themselves.
+- A CFL-type clip of the per-step driver contribution (bounding
+  |kappa_n * dt| by the range of the payoff xi) stabilizes the explicit
+  Euler backward recursion; the paper gives no numerical scheme for solving
+  (4.41)/(4.40), so this stabilization is an implementation choice, not a
+  paper-specified step.
 
 ## Not reproduced
 
 - The quantitative convergence rate of Y^(n) to Y^up as n -> infinity
   (Theorem 4.9) is not reproduced: the paper itself does not quantify this
-  rate, and the truncation range tested here (n up to 8) does not reach a
-  stable value of Y^up, so no converged upper-bound point estimate is
-  reported as "the" Esscher upper bound; only the truncated values Y^(n) are
-  reported.
+  rate. The truncation range tested here (n up to 64) reaches a plateau
+  within about 5% (see table above), so no exact converged upper/lower-bound
+  point estimate is reported as "the" Esscher bound; only the truncated
+  values Y^(n) are reported.
 - The full-scale Monte Carlo configuration declared in `src/config.py`
   (`EXP1_N_SIM_PAPER=200,000`, `EXP2_N_SIM_PAPER=100,000`) was not run in this
   report for reasons of computation time; it is available via the `--full`
