@@ -7,9 +7,9 @@ the martingale condition (3.7) solved for theta; and the density (3.8).
 # Custom implementation (paper Theorem 3.3, equations 3.5, 3.7, 3.8): no
 # library provides this novel two-parameter Esscher-with-degree-of-freedom
 # construction for progressively enlarged filtrations; pyportfolioopt and
-# skfolio (checked via Context7) cover portfolio-level Esscher/exponential
-# tilting only for static return distributions, not this filtration-enlargement
-# martingale-density theorem.
+# skfolio cover portfolio-level Esscher/exponential tilting only for static
+# return distributions, not this filtration-enlargement martingale-density
+# theorem.
 """
 from __future__ import annotations
 

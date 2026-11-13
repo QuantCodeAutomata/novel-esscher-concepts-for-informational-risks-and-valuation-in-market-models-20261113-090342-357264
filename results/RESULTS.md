@@ -82,23 +82,21 @@ Verdicts:
 - No external market data is used anywhere in this repository: both
   experiments are theoretical verifications of the paper's theorems by Monte
   Carlo simulation of the model of equation (2.1) and of a random horizon
-  parametrized as in Lemma 2.4, exactly as `data_requirements` of exp_1/exp_2
-  specify ("No external data required").
+  parametrized as in Lemma 2.4; no market or external data is required by
+  the paper's model.
 - Model parameters (b, sigma, gamma, lambda, r), the random-time quadruple
   (alpha, beta, eta, hazard rate of D^{p,F}), the Esscher parameters
   (psi, phi), the claim strike/recovery, and the time horizon T are not given
   numerical values in the paper; representative values were chosen and are
   documented with their source ("not specified in the paper") in
-  `src/config.py`, as explicitly anticipated by the uncertainties of exp_1
-  and exp_2 ("Specific numerical values for model parameters are not given in
-  the paper").
+  `src/config.py`.
 - The predictable compensator D^{p,F} of the default indicator is modelled
   as a continuous process with constant rate h + eta*lambda (see the module
   docstring of `src/random_time.py`); the paper's Lemma 2.4 states its
   existence and the decomposition D^{o,F} - D^{p,F} = G_- eta . N^F but does
-  not give a constructive model for D^{p,F} itself, consistent with the
-  uncertainty noted for exp_1 ("the exact form of the compensator D^{p,F}
-  depends on the specific model for tau").
+  not give a constructive model for D^{p,F} itself, since the exact form of
+  the compensator depends on the specific model chosen for the random time
+  tau.
 - The realized default time tau is generated from the constructed survival
   process G by the classical Cox (threshold) construction (tau = inf{t:
   G_t <= U}, U ~ Uniform(0,1) independent of F); this is the standard way to
